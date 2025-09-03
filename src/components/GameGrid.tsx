@@ -2,19 +2,22 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 interface GameTileProps {
-  isRevealed?: boolean;
-  hasMine?: boolean;
-  isClicked?: boolean;
-  onClick?: () => void;
+  isRevealed: boolean;
+  hasMine: boolean;
+  isClicked: boolean;
+  onClick: () => void;
+  gameOver: boolean;
 }
 
 interface GameGridProps {
   minePositions: Set<number>;
+  revealedTiles: Set<number>;
   onTileReveal: (index: number) => void;
   gameStarted: boolean;
+  gameOver: boolean;
 }
 
-const GameTile = ({ isRevealed, hasMine, isClicked, onClick }) => {
+const GameTile: React.FC<GameTileProps> = ({ isRevealed, hasMine, isClicked, onClick, gameOver }) => {
   const [showContent, setShowContent] = useState(false);
   useEffect(() => {
     if (isRevealed) {
@@ -36,9 +39,10 @@ const GameTile = ({ isRevealed, hasMine, isClicked, onClick }) => {
   return (
     <button
       onClick={onClick}
+      disabled={gameOver || isRevealed}
       className={cn(
-        "w-20 h-20 bg-[#434b4d] hover:bg-[#51595BFF] transition-all duration-150 rounded-lg border",
-        "max-[880px]:w-12 max-[880px]:h-12 max-[640px]:w-10 max-[640px]:h-10"
+        "w-20 h-20 bg-[#434b4d] hover:bg-[#51595BFF] rounded-lg transition-all duration-150 ",
+        "max-[1000px]:w-12 max-[1000px]:h-12 max-[640px]:w-10 max-[640px]:h-10"
       )}
       style={{ perspective: "1000px" }}
       aria-pressed={!!isRevealed}
@@ -51,17 +55,17 @@ const GameTile = ({ isRevealed, hasMine, isClicked, onClick }) => {
         }}
       >
         <div
-          className="absolute inset-0 rounded-lg border border-zinc-700 flex items-center justify-center"
+          className="absolute inset-0 rounded-lg flex items-center justify-center"
           style={{
             backfaceVisibility: "hidden",
           }}
         >
-          <div className="w-full h-full bg-[#434b4d] hover:bg-[#51595BFF] transition-colors duration-150 rounded-lg flex items-center justify-center">
-            <span className="text-lg max-[880px]:text-base max-[640px]:text-sm"></span>
+          <div className="w-full h-full bg-[#434b4d] hover:bg-[#51595BFF] rounded-lg transition-colors duration-150 flex items-center justify-center">
+            <span className="text-lg max-[1000px]:text-base max-[640px]:text-sm"></span>
           </div>
         </div>
         <div
-          className="absolute inset-0 rounded-lg border border-zinc-700 flex items-center justify-center"
+          className="absolute inset-0 flex rounded-lg items-center justify-center"
           style={{
             transform: "rotateY(180deg)",
             backfaceVisibility: "hidden",
@@ -69,12 +73,12 @@ const GameTile = ({ isRevealed, hasMine, isClicked, onClick }) => {
         >
           <div
             className={cn(
-              "w-full h-full flex items-center justify-center rounded-lg transition-colors duration-150",
+              "w-full h-full flex items-center rounded-lg justify-center transition-colors duration-150",
               showContent && hasMine ? "bg-red-600" : "bg-amber-500"
             )}
           >
             {showContent ? (
-              <span className="text-lg max-[880px]:text-base max-[640px]:text-sm">
+              <span className=" text-5xl max-[1000px]:text-2xl max-[640px]:text-xl">
                 {hasMine ? "💣" : "💎"}
               </span>
             ) : null}
@@ -85,36 +89,27 @@ const GameTile = ({ isRevealed, hasMine, isClicked, onClick }) => {
   );
 };
 
-
-export const GameGrid = ({ minePositions, onTileReveal, gameStarted }) => {
-  const [revealedTiles, setRevealedTiles] = useState(new Set());
-  const [clickedTile, setClickedTile] = useState(null);
+export const GameGrid: React.FC<GameGridProps> = ({ minePositions, revealedTiles, onTileReveal, gameStarted, gameOver }) => {
+  const [clickedTile, setClickedTile] = useState<number | null>(null);
   
   const tiles = Array.from({ length: 25 }, (_, index) => index);
   
-  useEffect(() => {
-    if (gameStarted) {
-      setRevealedTiles(new Set());
-    }
-  }, [gameStarted]);
-  
-  const handleTileClick = (index) => {
-    if (!gameStarted || revealedTiles.has(index)) return;
+  const handleTileClick = (index: number) => {
+    if (!gameStarted || revealedTiles.has(index) || gameOver) return;
     
     setClickedTile(index);
     setTimeout(() => setClickedTile(null), 150);
     
-    setRevealedTiles(prev => new Set([...prev, index]));
-    onTileReveal(index);
+    onTileReveal(index); 
   };
 
   return (
     <div className="flex flex-col items-center">
-      <div className="text-gray-400 text-sm mb-4 max-[880px]:text-xs max-[880px]:text-center">
-        {gameStarted ? "Click tiles to reveal!" : "Place your bet to start"}
+      <div className="text-gray-400 text-sm mb-4 max-[1000px]:text-xs max-[1000px]:text-center">
+        {gameStarted ? (gameOver ? "Game Over!" : "Click tiles to reveal!") : "Place your bet to start"}
       </div>
       
-      <div className="grid grid-cols-5 gap-4 p-6 bg-[#292d2e] rounded-xl max-[880px]:gap-1 max-[880px]:p-4 max-[640px]:p-3">
+      <div className="grid grid-cols-5 gap-4 p-6 bg-[#292d2e] rounded-lg max-[1000px]:gap-3 max-[1000px]:p-4 max-[640px]:gap-2 max-[640px]:p-3">
         {tiles.map((index) => (
           <GameTile
             key={index}
@@ -122,6 +117,7 @@ export const GameGrid = ({ minePositions, onTileReveal, gameStarted }) => {
             hasMine={minePositions.has(index)}
             isClicked={clickedTile === index}
             onClick={() => handleTileClick(index)}
+            gameOver={gameOver}
           />
         ))}
       </div>
