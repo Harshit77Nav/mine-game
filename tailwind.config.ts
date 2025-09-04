@@ -44,6 +44,10 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      fontFamily: {
+        // This creates the `font-montserrat` class
+        'montserrat': ['Montserrat', 'sans-serif'],
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

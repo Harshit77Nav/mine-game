@@ -3,8 +3,9 @@ import { ControlPanel } from "@/components/ControlPanel";
 import { GameGrid } from "@/components/GameGrid";
 import { StatusBar } from "@/components/StatusBar";
 import spaceBg from "@/assets/space-bg.png";
-import pirate from "@/assets/nano-banana-bg.jpeg";
+import pirate from "@/assets/nano-banana-bg.png";
 import Header from "@/components/Header";
+import IND from "@/assets/INR.rect.png";
 
 const RTP = 0.96;
 const ResponsiveMinesGame = () => {
@@ -17,7 +18,8 @@ const ResponsiveMinesGame = () => {
   const [betAmount, setBetAmount] = useState(0);
   const [mineCount, setMineCount] = useState(4);
   const [safeRevealed, setSafeRevealed] = useState(0);
-  const [showCashOutPopup, setShowCashOutPopup] = useState(false); 
+  const [showCashOutPopup, setShowCashOutPopup] = useState(false);
+  const [selectedTiles, setSelectedTiles] = useState<Set<number>>(new Set<number>());
 
   const generateRandomMines = (count: number): Set<number> => {
     const mines = new Set<number>();
@@ -37,6 +39,7 @@ const ResponsiveMinesGame = () => {
     setMultiplier(1);
     setProfit(0);
     setSafeRevealed(0);
+    setSelectedTiles(new Set<number>());
   };
 
   const calculateMultiplier = (k: number, m: number): number => {
@@ -53,10 +56,14 @@ const ResponsiveMinesGame = () => {
   const handleTileReveal = (index: number) => {
     if (gameOver || !gameStarted || revealedTiles.has(index)) return;
 
+    const newSelected = new Set(selectedTiles).add(index); 
+    setSelectedTiles(newSelected);
     const newRevealed = new Set([...revealedTiles, index]);
     setRevealedTiles(newRevealed);
 
     if (minePositions.has(index)) {
+      const allTiles = new Set<number>(Array.from({ length: 25 }, (_, i) => i));
+      setRevealedTiles(allTiles);
       setGameOver(true);
       setMultiplier(0);
       setProfit(-betAmount);
@@ -79,22 +86,23 @@ const ResponsiveMinesGame = () => {
 
   const handleCashOut = () => {
     if (gameOver || !gameStarted) return;
-    setShowCashOutPopup(true); 
+    setShowCashOutPopup(true);
+
+
+    const timerId = setTimeout(() => {
+      setGameOver(true);
+      setShowCashOutPopup(false);
+    }, 2000);
+    return () => {
+      clearTimeout(timerId);
+    };
   };
 
-  const confirmCashOut = () => {
-    setGameOver(true);
-    setShowCashOutPopup(false);
-  };
-
-  const cancelCashOut = () => {
-    setShowCashOutPopup(false);
-  };
 
   const totalCashWon = betAmount * multiplier;
 
   return (
-    <div 
+    <div
       className="min-h-screen bg-gray-900 flex flex-wrap  justify-center  "
       style={{
         backgroundImage: `url(${spaceBg})`,
@@ -104,13 +112,13 @@ const ResponsiveMinesGame = () => {
       }}
     >
       <div className=" w-full ">
-      <Header/>
+        <Header />
 
-       </div>
-      
-      <div className="relative w-full max-w-6xl h-[700px] bg-[#202424] backdrop-blur-sm rounded-lg border flex flex-col overflow-hidden max-[1000px]:h-auto max-[1000px]:min-h-[500px]">
+      </div>
+
+      <div className="relative w-full max-w-[1200px] h-[700px] bg-[#202424] backdrop-blur-sm rounded-lg border flex flex-col overflow-hidden max-[1000px]:h-auto max-[1000px]:min-h-[650px]">
         <div className="flex-1 flex max-[1000px]:flex-col">
-          <ControlPanel 
+          <ControlPanel
             betAmount={betAmount}
             setBetAmount={setBetAmount}
             mineCount={mineCount}
@@ -137,35 +145,50 @@ const ResponsiveMinesGame = () => {
               onTileReveal={handleTileReveal}
               gameStarted={gameStarted}
               gameOver={gameOver}
+              selectedTiles={selectedTiles}
             />
           </div>
         </div>
-        
+
         <StatusBar />
       </div>
 
       {showCashOutPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-[#202424] p-6 rounded-lg border border-gray-600 max-w-md w-full text-center">
-            <h2 className="text-xl text-gray-300 mb-4">Cash Out Confirmation</h2>
-            <p className="text-gray-400 mb-2">Multiplier: {multiplier}x</p>
-            <p className="text-gray-400 mb-4">Total Cash Won: ₹{totalCashWon.toFixed(2)}</p>
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={confirmCashOut}
-                className="bg-green-500 text-black px-4 py-2 rounded hover:bg-green-600"
-              >
-                Confirm
-              </button>
-              <button
-                onClick={cancelCashOut}
-                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-              >
-                Play More
-              </button>
+        <>
+        
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+            <div className="bg-[#202424] p-5 rounded-xl border border-[#34393a] max-w-xs w-full text-center shadow-[0_8px_30px_rgba(0,0,0,0.6)]">
+
+              <div className="flex items-center justify-center mb-2 gap-2">
+
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="opacity-90">
+                  <path d="M12 2 L13.5 7 L18 8 L13.5 9.5 L12 14 L10.5 9.5 L6 8 L10.5 7 L12 2Z" fill="#1bff9a" />
+                </svg>
+
+                <div className="w-1 h-1 bg-[#1bff9a] rounded-full"></div>
+                <div className="w-1 h-1 bg-[#1bff9a] rounded-full"></div>
+                <div className="w-1 h-1 bg-[#1bff9a] rounded-full"></div>
+
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="opacity-90">
+                  <path d="M12 2 L13.5 7 L18 8 L13.5 9.5 L12 14 L10.5 9.5 L6 8 L10.5 7 L12 2Z" fill="#1bff9a" />
+                </svg>
+              </div>
+
+              <div className="text-[28px] md:text-3xl font-extrabold text-[#00f78a] tracking-tight leading-none">
+                {multiplier}x
+              </div>
+
+              <div className="mx-auto mt-4">
+                <div className="inline-flex items-center justify-center gap-3 bg-[#2b3132] border border-[#35393a] rounded-lg px-5 py-2.5 min-w-[170px] shadow-inner">
+                  <span className="text-gray-100 font-semibold text-sm">₹{totalCashWon.toFixed(2)}</span>
+
+                  <img src={IND} alt="IND" className="w-5 h-4 rounded-sm object-cover border border-[#2f3435]" />
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+
+        </>
       )}
     </div>
   );
