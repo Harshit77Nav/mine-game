@@ -105,7 +105,7 @@ const ResponsiveMinesGame = () => {
     <div
       className="min-h-screen bg-gray-900 flex flex-wrap  justify-center  "
       style={{
-        backgroundImage: `url(${spaceBg})`,
+        backgroundColor: `#232626`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundAttachment: 'fixed'
